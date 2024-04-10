@@ -116,3 +116,34 @@ It contains only `preparation` and `bidsification` steps.
 > It may happen that some subjects may produce unexpected errors. Copy such
 subjects to the test dataset, and adjust map and/or plugins using
 `bidsification_dev.ipynb`.
+
+## Usage of virtual environments in jupyther-notebook/lab
+
+> All commands must be executed in terminal.
+
+To install and use notebooks in specific environment (named for ex. `bidsme`),
+first this enveronment must be created:
+
+[\*NIX](https://docs.python.org/3/tutorial/venv.html)
+```
+python3 -m venv bidsme_env -p python3.9
+source bidsme_env/bin/activate
+```
+
+[Conda]
+```
+conda create --name bidsme_env python=3.9
+conda activate bidsme_env
+```
+
+The optional parameters `-p python3.9` and `python=3.9` allow to specify
+version of python to use.
+It is nessesary for most modern systems, as `bidsme` is supports Python>=3.10.
+
+Once environment is activated, it must be registered as `ipython` kernel:
+```
+python -m pip install ipykernel
+python -m ipykernel install --user --name bidsme --display-name "bidsme (Python 3.9)"
+```
+
+Then, the created kernell can be selected in the kernell drop-down list of notebooks.
