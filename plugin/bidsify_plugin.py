@@ -1,5 +1,8 @@
 import os
+import shutil
 import json
+
+from glob import glob
 
 from bidsme.bidsMeta import BidsSession
 from bidsme.plugins.tools.General import CheckSeries
@@ -9,7 +12,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 base_path = os.path.dirname(__file__)
-base_path = os.path.join(base_path, "..")
+base_path = os.path.dirname(base_path)
 
 # global variables
 preparefolder = ""
@@ -19,34 +22,6 @@ dry_run = False
 # Participants lists
 white_list = {}
 black_list = {}
-
-acquisitions = {"ses-LCL": [
-    "localizer",
-    "cmrr_mbep2d_bold_mb2_invertpe",
-    "cmrr_mbep2d_bold_mb2_task_nfat",
-    "cmrr_mbep2d_bold_mb2_invertpe",
-    "cmrr_mbep2d_bold_mb2_rest",
-    "gre_field_mapping",
-    "gre_field_mapping",
-    "t1_mpr_sag_p2_iso",
-    "t2_spc_da-fl_sag_p2_iso"
-    ],
-                "ses-HCL": [
-    "localizer",
-    "cmrr_mbep2d_bold_mb2_invertpe",
-    "cmrr_mbep2d_bold_mb2_task_fat",
-    "cmrr_mbep2d_bold_mb2_invertpe",
-    "cmrr_mbep2d_bold_mb2_rest",
-    "gre_field_mapping",
-    "gre_field_mapping",
-    "t1_mpr_sag_p2_iso",
-    ]
-                }
-
-task_prot = ["cmrr_mbep2d_bold_mb2_task_nfat",
-             "cmrr_mbep2d_bold_mb2_task_fat",
-             "cmrr_mbep2d_bold_mb2_rest"
-             ]
 
 
 def InitEP(source: str, destination: str,
@@ -62,17 +37,11 @@ def InitEP(source: str, destination: str,
     # Getting white, black and ignore lists
     global white_list
     global black_list
-    w_pth = os.path.join(base_path, "white_list.json")
-    if os.path.isfile(w_pth):
-        logger.info("Loading wihte list from {}".format(w_pth))
-        with open(w_pth) as f:
-            white_list = json.load(f)
+    global remove_list
+    lists_path = os.path.join(base_path, "lists")
 
-    b_pth = os.path.join(base_path, "black_list.json")
-    if os.path.isfile(b_pth):
-        logger.info("Loading black list from {}".format(b_pth))
-        with open(b_pth) as f:
-            black_list = json.load(f)
+    white_list = load_white_list(lists_path, "white_list")
+    black_list = load_white_list(lists_path, "black_list", modalities=False)
 
 
 def SubjectEP(scan: BidsSession) -> int:
@@ -84,36 +53,118 @@ def SubjectEP(scan: BidsSession) -> int:
 def SessionEP(session: BidsSession) -> int:
     path = os.path.join(preparefolder, session.getPath(True), "MRI")
 
-    if session.subject in black_list and session.session in black_list[session.subject]:
-        logger.info("Session {} in black list".format(session.session))
+    if session.subject in black_list:
+        if session.session or session.session in black_list[session.subject]:
+            logger.info("Session {} in black list".format(session.session))
+            return -1
+
+    # Checking acquisition list
+    if not check_prepared(bidsfolder, session, white_list):
         return -1
-
-    if session.subject in white_list and session.session in white_list[session.subject]:
-        logger.info("Using alternative acquisitions from white list")
-        acqs = white_list[session.subject][session.session]
-    else:
-        acqs = acquisitions[session.session]
-
-    if not CheckSeries(path, acqs, strict=True):
-        logger.error("{} Series do not match expectation."
-                     .format(session.subject))
-        return -1
-
-    global series
-    series = sorted(os.listdir(path))
 
 
 def SequenceEP(recording):
+    
+    # Setting up custom variable
+    # Applicable only for MRI
+    if recording.Module() == "MRI":
+        recording.custom["dummies"] = \
+                recording.getAttribute("AcquisitionNumber") - 1
 
-    if recording.recId() == "cmrr_mbep2d_bold_mb2_invertpe":
-        task_id = series.index(recording.recIdentity(index=False)) + 1
-        if series[task_id].endswith("_task_nfat") or\
-                series[task_id].endswith("_task_fat"):
-            recording.custom["task"] = "sternberg"
-        elif series[task_id].endswith("_rest"):
-            recording.custom["task"] = "rest"
+
+# Helper functions
+def load_white_list(pth, suffix, modalities=True):
+    """
+    Search for list json file in provided path, and parcing
+    contained lists.
+    """
+    res = {}
+
+    if modalities:
+        suffix = "_{}.json".format(suffix)
+
+        for l_pth in glob(os.path.join(pth, "*" + suffix)):
+            fname = os.path.basename(l_pth)
+            mod = fname[:-len(suffix)]
+            logger.info("Loading {}".format(l_pth))
+            with open(l_pth) as f:
+                res[mod] = json.load(f)
+    else:
+        l_pth = os.path.join(pth, suffix + ".json")
+        if os.path.isfile(l_pth):
+            logger.info("Loading {}".format(l_pth))
+            with open(l_pth) as f:
+                res = json.load(f)
+
+    return res
+
+
+def cleanup_prepared(derivated, session, remove_list):
+    """
+    Cleanup unwanted sessions based on contents of remove_list
+    """
+    sub = session.subject
+    ses = session.session if session.session else "ses-"
+
+    for mod in remove_list:
+        if sub not in remove_list[mod]:
+            continue
+
+        to_remove = remove_list[mod][sub]
+        if isinstance(to_remove, dict):
+            to_remove = to_remove.get(ses, [])
+        elif ses == "ses-":
+            if not isinstance(to_remove, list):
+                logger.warning("Can't interpret {} as sequence to remove"
+                               .format(to_remove))
+            to_remove = []
         else:
-            logger.error("Can't retrieve task sequence for {}"
-                         .format(recording.recIdentity()))
-            return -1
-    recording.custom["dummies"] = recording.getAttribute("AcquisitionNumber") - 1
+            to_remove = []
+
+        rm_path = os.path.join(derivated, session.getPath(empty=True), mod)
+        for s in to_remove:
+            pth = os.path.join(rm_path, s)
+            if os.path.isdir(pth):
+                logger.info("Removing {} from {}/{}".format(s, sub, ses))
+                shutil.rmtree(pth)
+
+
+def check_prepared(bidsfolder, session, white_list):
+    """
+    Compares prepared list of acquisitions with list
+    from white list, produce error if discrepency is
+    found
+    """
+    sub = session.subject
+    ses = session.session if session.session else "ses-"
+
+    for mod in white_list:
+        path = os.path.join(bidsfolder, session.getPath(True), mod)
+
+        default = white_list[mod].get("default", {})
+        check_list = white_list[mod].get(sub, {})
+
+        acqs = []
+        if isinstance(check_list, dict):
+            acqs = check_list.get(ses, [])
+        elif ses != "ses-":
+            logger.warning("Can't interpret {} as sequences to check"
+                           .format(check_list))
+
+        if acqs:
+            logger.info("{}/{}: Comparing acquisitions with white list"
+                        .format(sub, ses))
+        else:
+            if isinstance(default, dict):
+                acqs = default.get(ses, [])
+            elif ses != "ses-":
+                logger.warning("Can't interpret {} as sequences to check"
+                               .format(default))
+        if acqs:
+            logger.info("{}/{}: Comparing acquisitions with default list"
+                        .format(sub, ses))
+            if not CheckSeries(path, acqs, strict=True):
+                logger.error("{}/{} Series do not match expectation."
+                             .format(sub, ses))
+            return False
+    return True
