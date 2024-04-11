@@ -138,7 +138,7 @@ conda activate bidsme_env
 
 The optional parameters `-p python3.9` and `python=3.9` allow to specify
 version of python to use.
-It is nessesary for most modern systems, as `bidsme` is supports Python>=3.10.
+It is nessesary for most modern systems, as `bidsme` is supports Python<3.11.
 
 Once environment is activated, it must be registered as `ipython` kernel:
 ```
