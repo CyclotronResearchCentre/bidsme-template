@@ -1,0 +1,73 @@
+{
+  "default": {
+    "ses-LCL": ["localizer",
+                "cmrr_mbep2d_bold_mb2_invertpe",
+                "cmrr_mbep2d_bold_mb2_task_nfat",
+                "cmrr_mbep2d_bold_mb2_invertpe",
+                "cmrr_mbep2d_bold_mb2_rest",
+                "gre_field_mapping",
+                "gre_field_mapping",
+                "t1_mpr_sag_p2_iso",
+                "t2_spc_da-fl_sag_p2_iso"
+                ],
+    "ses-HCL": ["localizer",
+                "cmrr_mbep2d_bold_mb2_invertpe",
+                "cmrr_mbep2d_bold_mb2_task_fat",
+                "cmrr_mbep2d_bold_mb2_invertpe",
+                "cmrr_mbep2d_bold_mb2_rest",
+                "gre_field_mapping",
+                "gre_field_mapping",
+                "t1_mpr_sag_p2_iso"
+                ]
+  },
+  "sub-AVC003": {
+    "ses-LCL": ["localizer",
+                "cmrr_mbep2d_bold_mb2_invertpe",
+                "cmrr_mbep2d_bold_mb2_rest",
+                "gre_field_mapping",
+                "gre_field_mapping",
+                "t1_mpr_sag_p2_iso",
+                "t2_spc_da-fl_sag_p2_iso"
+                ],
+    "ses-HCL": ["localizer",
+                "cmrr_mbep2d_bold_mb2_invertpe",
+                "cmrr_mbep2d_bold_mb2_rest",
+                "gre_field_mapping",
+                "gre_field_mapping",
+                "t1_mpr_sag_p2_iso"
+                ]
+  },
+  "sub-AVC008": {
+    "ses-LCL": ["localizer",
+                "cmrr_mbep2d_bold_mb2_invertpe",
+                "cmrr_mbep2d_bold_mb2_task_nfat",
+                "cmrr_mbep2d_bold_mb2_invertpe",
+                "cmrr_mbep2d_bold_mb2_rest",
+                "gre_field_mapping",
+                "gre_field_mapping",
+                "t1_mpr_sag_p2_iso"
+                ]
+  },
+  "sub-HC013": {
+    "ses-HCL": ["localizer",
+                "cmrr_mbep2d_bold_mb2_invertpe",
+                "cmrr_mbep2d_bold_mb2_task_nfat",
+                "cmrr_mbep2d_bold_mb2_invertpe",
+                "cmrr_mbep2d_bold_mb2_rest",
+                "gre_field_mapping",
+                "gre_field_mapping",
+                "t1_mpr_sag_p2_iso"
+                ]
+  },
+  "sub-HC028": {
+    "ses-LCL": ["cmrr_mbep2d_bold_mb2_invertpe",
+                "cmrr_mbep2d_bold_mb2_task_nfat",
+                "cmrr_mbep2d_bold_mb2_invertpe",
+                "cmrr_mbep2d_bold_mb2_rest",
+                "gre_field_mapping",
+                "gre_field_mapping",
+                "t1_mpr_sag_p2_iso",
+                "t2_spc_da-fl_sag_p2_iso"
+                ]
+  }
+}

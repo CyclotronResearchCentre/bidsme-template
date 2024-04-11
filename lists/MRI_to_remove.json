@@ -1,0 +1,8 @@
+{
+  "sub-HC028": {
+    "ses-LCL": ["001-localizer"]
+  },
+  "sub-AVC017": {
+    "ses-LCL": ["006-cmrr_mbep2d_bold_mb2_invertpe"]
+  }
+}
