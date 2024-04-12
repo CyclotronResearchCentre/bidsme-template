@@ -274,5 +274,5 @@ def check_prepared(bidsfolder, session, white_list):
             if not CheckSeries(path, acqs, strict=True):
                 logger.error("{}/{} Series do not match expectation."
                              .format(sub, ses))
-            return False
+                return False
     return True

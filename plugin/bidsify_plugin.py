@@ -1,5 +1,4 @@
 import os
-import shutil
 import json
 
 from glob import glob
@@ -51,15 +50,13 @@ def SubjectEP(scan: BidsSession) -> int:
 
 
 def SessionEP(session: BidsSession) -> int:
-    path = os.path.join(preparefolder, session.getPath(True), "MRI")
-
     if session.subject in black_list:
         if session.session or session.session in black_list[session.subject]:
             logger.info("Session {} in black list".format(session.session))
             return -1
 
     # Checking acquisition list
-    if not check_prepared(bidsfolder, session, white_list):
+    if not check_prepared(preparefolder, session, white_list):
         return -1
 
 
@@ -99,36 +96,6 @@ def load_white_list(pth, suffix, modalities=True):
     return res
 
 
-def cleanup_prepared(derivated, session, remove_list):
-    """
-    Cleanup unwanted sessions based on contents of remove_list
-    """
-    sub = session.subject
-    ses = session.session if session.session else "ses-"
-
-    for mod in remove_list:
-        if sub not in remove_list[mod]:
-            continue
-
-        to_remove = remove_list[mod][sub]
-        if isinstance(to_remove, dict):
-            to_remove = to_remove.get(ses, [])
-        elif ses == "ses-":
-            if not isinstance(to_remove, list):
-                logger.warning("Can't interpret {} as sequence to remove"
-                               .format(to_remove))
-            to_remove = []
-        else:
-            to_remove = []
-
-        rm_path = os.path.join(derivated, session.getPath(empty=True), mod)
-        for s in to_remove:
-            pth = os.path.join(rm_path, s)
-            if os.path.isdir(pth):
-                logger.info("Removing {} from {}/{}".format(s, sub, ses))
-                shutil.rmtree(pth)
-
-
 def check_prepared(bidsfolder, session, white_list):
     """
     Compares prepared list of acquisitions with list
@@ -166,5 +133,5 @@ def check_prepared(bidsfolder, session, white_list):
             if not CheckSeries(path, acqs, strict=True):
                 logger.error("{}/{} Series do not match expectation."
                              .format(sub, ses))
-            return False
+                return False
     return True
